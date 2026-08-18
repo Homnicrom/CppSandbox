@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure (CMake)
+        run: cmake -B build -A x64
+
+      - name: Build all targets (Debug|x64)
+        run: cmake --build build --config Debug
+
+  asan-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure (CMake)
+        run: cmake -B build -A x64
+
+      - name: Build MemorySafetyDrills with AddressSanitizer (MSVC native, VS 2019 16.9+)
+        run: cmake --build build --config Debug --target MemorySafetyDrills
+
+      - name: Run drill and confirm ASan catches the dangling reference
+        shell: pwsh
+        run: |
+          & "build\bin\MemorySafetyDrills\Debug\MemorySafetyDrills.exe"
+          $exitCode = $LASTEXITCODE
+          if ($exitCode -eq 0) {
+            Write-Host "Expected AddressSanitizer to catch a dangling reference, but the program exited cleanly (exit 0). The drill's bug may have been accidentally fixed; see README/CLAUDE.md."
+            exit 1
+          }
+          Write-Host "AddressSanitizer caught the bug as expected (exit code $exitCode)."
+
+  asan-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install g++-14 (for <print>/std::println support)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-14
+
+      - name: Build MemorySafetyDrills with AddressSanitizer
+        run: g++-14 -std=c++23 -fsanitize=address -g source/MemorySafetyDrills/main.cpp -o drill1
+
+      - name: Run drill and confirm ASan catches the dangling reference
+        run: |
+          set +e
+          ./drill1
+          exit_code=$?
+          set -e
+          if [ "$exit_code" -eq 0 ]; then
+            echo "Expected AddressSanitizer to catch a dangling reference, but the program exited cleanly (exit 0). The drill's bug may have been accidentally fixed; see README/CLAUDE.md."
+            exit 1
+          fi
+          echo "AddressSanitizer caught the bug as expected (exit code $exit_code)."

@@ -1,0 +1,27 @@
+# CMake
+build/
+out/
+
+# Visual Studio
+.vs/
+*.user
+*.sdf
+*.opensdf
+*.suo
+*.VC.db
+*.VC.opendb
+
+# MSBuild output (if native .sln/.vcxproj are ever restored)
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+Win32/
+
+# ASan drill build artifacts (g++ -o d1, etc.)
+MemorySafetyDrills/d[0-9]
+MemorySafetyDrills/d[0-9].exe
+
+# ASan drill build artifacts from the CI command run locally (g++ ... -o drill1)
+/drill[0-9]
+/drill[0-9].exe
