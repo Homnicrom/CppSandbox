@@ -39,6 +39,7 @@ jobs:
             exit 1
           }
           Write-Host "AddressSanitizer caught the bug as expected (exit code $exitCode)."
+          exit 0
 
   asan-linux:
     runs-on: ubuntu-latest
