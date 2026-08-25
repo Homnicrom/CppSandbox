@@ -18,7 +18,7 @@ public:
       std::unique_ptr<T, IVehicle::Helper> vehicle{new T, IVehicle::Helper{}};
       vehicle->Setup(std::forward<Args>(args)...);
       return vehicle;
-    };
+    }
 
     template<typename T, class... Args>
     requires std::derived_from<T, IVehicle>
@@ -27,7 +27,7 @@ public:
       UniquePtr<T, IVehicle::Helper> vehicle{ new T, IVehicle::Helper{} };
       vehicle->Setup(std::forward<Args>(args)...);
       return vehicle;
-    };
+    }
 
     template<typename T, class... Args>
     requires std::derived_from<T, IVehicle>
@@ -36,7 +36,7 @@ public:
       std::shared_ptr<T> vehicle{new T, IVehicle::Helper{}};
       vehicle->Setup(std::forward<Args>(args)...);
       return vehicle;
-    };
+    }
 
     void operator()(IVehicle* vehicle) const 
     {
@@ -49,9 +49,10 @@ public:
 
   int m_Speed{};
 
-  virtual ~IVehicle();
-
   virtual void Print() const = 0;
+
+protected:
+  virtual ~IVehicle();
 
 private:
   ScopedTimer vehicleScopedTimer{};
@@ -67,9 +68,10 @@ public:
 private:
   std::string m_Name{};
 
-  void Setup(const int speed, const std::string name);
+  void Setup(const int speed, std::string name);
   void DeleteVehicle() override;
 
+  Car() = default;
   friend IVehicle;
 };
 
@@ -84,6 +86,7 @@ private:
   void Setup(const int speed, const int cargoMax);
   void DeleteVehicle() override;
 
+  Van() = default;
   friend IVehicle;
 };
 
@@ -99,6 +102,7 @@ private:
   void Setup(const int speed, const int cargoMax, const float balance);
   void DeleteVehicle() override;
 
+  Forklift() = default;
   friend IVehicle;
 };
 
@@ -114,5 +118,6 @@ private:
   void Setup(const int speed, const int trailerCount, const float maxLoad);
   void DeleteVehicle() override;
 
+  Truck() = default;
   friend IVehicle;
 };

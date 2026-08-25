@@ -1,6 +1,6 @@
 ---
 name: cmake-build-and-test
-description: Handles all CMake interactions in this C++ sandbox repo (CppSandbox, containing LangCatalog, RAIIGarage, MemorySafetyDrills). Use whenever the task involves configuring, building, rebuilding, cleaning, running, or testing any project via CMake, adding a target or GoogleTest case, enabling or diagnosing AddressSanitizer, running the CI build locally, or debugging a CMake configure/build/link failure. Trigger this even when the user just says "build it", "run the tests", "run the ASan drill", "why won't this compile", or names a project (LangCatalog/RAIIGarage/MemorySafetyDrills) without saying "CMake" explicitly.
+description: Handles all CMake interactions in this C++ sandbox repo (CppSandbox, containing LangCatalog, RAIIGarage, MemorySafetyDrills). Use whenever the task involves configuring, building, rebuilding, cleaning, running, or testing any project via CMake, adding a target or GoogleTest case, enabling or diagnosing AddressSanitizer, running the CI build locally, or debugging a CMake configure/build/link failure.
 allowed-tools: Bash, Read, Edit, Glob, Grep
 ---
 

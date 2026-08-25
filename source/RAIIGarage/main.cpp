@@ -13,7 +13,7 @@ int main()
   std::println("{}", "***MAX***");
   constexpr auto maxResult = Utilities::Max(-120, -135, -2345.5f);
   std::println("Max Result {}", maxResult);
-
+  
   std::println("\n{}", "***IVehicle***");
   {
     Dealer d1{ IVehicle::Helper::CreateVehicleShared<Car>(10, "My Car") };

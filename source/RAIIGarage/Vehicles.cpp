@@ -1,18 +1,18 @@
 #include<RAIIGarage/Vehicles.h>
 #include<print>
 
-void Car::Setup(const int speed, const std::string name)
-{
-  m_Speed = speed;
-  m_Name = name;
-}
-
 IVehicle::~IVehicle()
 {
   std::println("{0}", "IVehicle deleted!");
 }
 
 ///////////////////////
+
+void Car::Setup(const int speed, std::string name)
+{
+  m_Speed = speed;
+  m_Name = std::move(name);
+}
 
 void Car::Print() const
 {

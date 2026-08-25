@@ -9,7 +9,7 @@ public:
     std::println("Buffer constructor! {0}", *m_Num);
   }
 
-  Buffer(const int num) : m_Num{new int{num}}
+  explicit Buffer(const int num) : m_Num{new int{num}}
   {
     std::println("Buffer int argument constructor! {0}", *m_Num);
   }

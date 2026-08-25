@@ -17,6 +17,12 @@ int main()
   std::ifstream fs{};
   fs.open("languages.txt", std::fstream::in);
 
+  if (!fs.is_open())
+  {
+    std::cerr << "languages.txt could not be opened";
+    return EXIT_FAILURE;
+  }
+
   std::vector<language> languageArray{};
   std::string str{};
 
@@ -30,8 +36,8 @@ int main()
     bool designerEmpty{ true };
     while(strStrm >> temp)
     {
-      char* s;
-      int num{ std::strtol(temp.c_str(), &s, 10) };
+      char* s{};
+      int num{ static_cast<int>(std::strtol(temp.c_str(), &s, 10)) };
       if (*s)
       {
         lan.designer += designerEmpty ? temp : " " + temp;
@@ -51,5 +57,5 @@ int main()
     std::cout << lan.lang << "," << lan.designer << "," << lan.date << std::endl;
   }
 
-  return 0;
+  return EXIT_SUCCESS;
 }

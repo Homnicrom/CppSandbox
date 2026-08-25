@@ -28,7 +28,7 @@ public:
   //Converting move constructor. Allows for coverting derived classes to base
   template<class U, class E>
   requires std::convertible_to<U*, T*> && std::constructible_from<Dx, E&&>
-  UniquePtr(UniquePtr<U, E>&& uniquePtr) noexcept : m_Ptr(uniquePtr.Release()), m_Deleter(std::forward<E>(uniquePtr.m_Deleter))
+  UniquePtr(UniquePtr<U, E>&& uniquePtr) noexcept : m_Ptr(uniquePtr.Release()), m_Deleter(std::forward<E>(uniquePtr.GetDeleter()))
   {}
 
   UniquePtr(UniquePtr&& uniquePtr) noexcept : m_Ptr{ uniquePtr.m_Ptr }, m_Deleter{std::move(uniquePtr.m_Deleter)}
@@ -76,7 +76,9 @@ public:
   void Reset(T* ptr = nullptr) noexcept
   {
     if (m_Ptr)
+    {
       m_Deleter(m_Ptr);
+    }
 
     m_Ptr = ptr;
   }
@@ -88,6 +90,12 @@ public:
     return ptr;
   }
 
+  Dx& GetDeleter()
+  {
+    return m_Deleter;
+  }
+
+private:
   T* m_Ptr{};
   Dx m_Deleter{};
 };
