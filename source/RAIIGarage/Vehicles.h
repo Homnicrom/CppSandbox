@@ -47,11 +47,11 @@ public:
     }
   };
 
-  int m_Speed{};
-
   virtual void Print() const = 0;
 
 protected:
+  int m_Speed{};
+
   virtual ~IVehicle();
 
 private:
@@ -72,6 +72,7 @@ private:
   void DeleteVehicle() override;
 
   Car() = default;
+  ~Car() override = default;
   friend IVehicle;
 };
 
@@ -87,6 +88,7 @@ private:
   void DeleteVehicle() override;
 
   Van() = default;
+  ~Van() override = default;
   friend IVehicle;
 };
 
@@ -103,6 +105,7 @@ private:
   void DeleteVehicle() override;
 
   Forklift() = default;
+  ~Forklift() override = default;
   friend IVehicle;
 };
 
@@ -119,5 +122,6 @@ private:
   void DeleteVehicle() override;
 
   Truck() = default;
+  ~Truck() override = default;
   friend IVehicle;
 };

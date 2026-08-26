@@ -28,9 +28,9 @@ public:
       std::println("Calling Vehicles of type {0}:", typeid(T).name());
     }
 
-    for (const std::weak_ptr<IVehicle>& vehicleIt : m_Vehicles)
+    for (const Entry& entry : m_Vehicles)
     {
-      const auto vehicleLock{ vehicleIt.lock() };
+      const auto vehicleLock{ entry.vehicle.lock() };
       if (vehicleLock)
       {
         if constexpr (isVoid)
@@ -46,7 +46,13 @@ public:
   }
 
 private:
-  std::vector<std::weak_ptr<IVehicle>> m_Vehicles;
+  struct Entry
+  {
+    std::weak_ptr<IVehicle> vehicle;
+    int refCount{ 1 };
+  };
+
+  std::vector<Entry> m_Vehicles;
 
   Registry() = default;
   ~Registry() = default;

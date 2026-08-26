@@ -40,7 +40,11 @@ int main()
       int num{ static_cast<int>(std::strtol(temp.c_str(), &s, 10)) };
       if (*s)
       {
-        lan.designer += designerEmpty ? temp : " " + temp;
+        if (!designerEmpty)
+        {
+          lan.designer += ' ';
+        }
+        lan.designer += temp;
         designerEmpty = false;
       }
       else
@@ -49,12 +53,12 @@ int main()
       }
     }
 
-    languageArray.push_back(lan);
+    languageArray.push_back(std::move(lan));
   }
 
   for (const language& lan : languageArray)
   {
-    std::cout << lan.lang << "," << lan.designer << "," << lan.date << std::endl;
+    std::cout << lan.lang << "," << lan.designer << "," << lan.date << "\n";
   }
 
   return EXIT_SUCCESS;

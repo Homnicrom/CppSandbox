@@ -14,26 +14,26 @@ public:
     std::println("Buffer int argument constructor! {0}", *m_Num);
   }
 
-  Buffer(const Buffer& buffer) : m_Num{ new int{ *buffer.m_Num } }
+  Buffer(const Buffer& buffer) : m_Num{ buffer.m_Num ? new int{ *buffer.m_Num } : nullptr }
   {
-    std::println("Buffer COPY constructor! {0}", *m_Num);
+    m_Num != nullptr ? std::println("Buffer COPY constructor! {0}", *m_Num) : std::println("Buffer COPY constructor! Nullptr");
   }
 
   Buffer(Buffer&& buffer) noexcept : m_Num{buffer.m_Num}
   {
     buffer.m_Num = nullptr;
-    std::println("Buffer MOVE constructor! {0}", *m_Num);
+    m_Num != nullptr ? std::println("Buffer MOVE constructor! {0}", *m_Num) : std::println("Buffer MOVE constructor! Nullptr");
   }
 
   Buffer& operator=(const Buffer& buffer)
   {
     if (this != &buffer)
     {
-      int* temp = new int(*buffer.m_Num); //For possible allocation failure, good pratice. Move assignment does not allocate
+      int* temp = buffer.m_Num ? new int(*buffer.m_Num) : nullptr; //For possible allocation failure, good pratice. Move assignment does not allocate
       delete m_Num;
       m_Num = temp;
     }
-    std::println("Buffer assignment! {0}", *m_Num);
+    m_Num != nullptr ? std::println("Buffer assignment! {0}", *m_Num) : std::println("Buffer assignment! Nullptr");
 
     return *this;
   }
@@ -46,7 +46,7 @@ public:
       m_Num = buffer.m_Num;
       buffer.m_Num = nullptr;
     }
-    std::println("Buffer MOVE assignment!{0}", *m_Num);
+    m_Num != nullptr ? std::println("Buffer MOVE assignment!{0}", *m_Num) : std::println("Buffer MOVE assignment! Nullptr");
 
     return *this;
   }

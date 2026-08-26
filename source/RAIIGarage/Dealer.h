@@ -6,7 +6,10 @@ class IVehicle;
 class Dealer
 {
 public:
-  Dealer(const std::shared_ptr<IVehicle>& vehicle);
+  Dealer(std::shared_ptr<IVehicle> vehicle);
+
+  Dealer(const Dealer& other);
+  Dealer& operator=(const Dealer& other);
 
   ~Dealer();
 

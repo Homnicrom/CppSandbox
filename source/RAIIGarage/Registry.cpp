@@ -2,14 +2,31 @@
 
 void Registry::RegisterVehicle(const std::shared_ptr<IVehicle>& vehicle)
 {
-  m_Vehicles.push_back(vehicle);
+  for (Entry& entry : m_Vehicles)
+  {
+    if (entry.vehicle.lock().get() == vehicle.get())
+    {
+      ++entry.refCount;
+      return;
+    }
+  }
+
+  m_Vehicles.push_back({ vehicle, 1 });
 }
 
 void Registry::RemoveVehicle(const std::shared_ptr<IVehicle>& vehicle)
 {
-  std::erase_if(m_Vehicles, [&vehicle](const std::weak_ptr<IVehicle>& vehicleIt) {
-    auto vehicleLock{ vehicleIt.lock() };
-    return !vehicleLock || vehicle.get() == vehicleLock.get();
+  for (Entry& entry : m_Vehicles)
+  {
+    if (entry.vehicle.lock().get() == vehicle.get())
+    {
+      --entry.refCount;
+      break;
+    }
+  }
+
+  std::erase_if(m_Vehicles, [](const Entry& entry) {
+    return entry.refCount <= 0 || entry.vehicle.expired();
     });
 }
 
