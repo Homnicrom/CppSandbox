@@ -8,6 +8,9 @@ public:
   ScopedTimer() : m_Begin{ std::chrono::steady_clock::now() }, m_End{}
   {}
 
+  ScopedTimer(const ScopedTimer&) = delete;
+  ScopedTimer& operator=(const ScopedTimer&) = delete;
+
   ~ScopedTimer()
   {
     m_End = std::chrono::steady_clock::now();

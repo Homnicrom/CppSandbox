@@ -51,13 +51,8 @@ public:
   {
     if (this != &uniquePtr)
     {
-      if (m_Ptr)
-      {
-        m_Deleter(m_Ptr);
-      }
-      m_Ptr = uniquePtr.m_Ptr;
+      Reset(uniquePtr.Release()); //Deletes the old resource with the old deleter, deleter is only replaced afterwards
       m_Deleter = std::move(uniquePtr.m_Deleter);
-      uniquePtr.m_Ptr = nullptr;
     }
 
     return *this;
@@ -73,14 +68,25 @@ public:
     return m_Ptr;
   }
 
+  explicit operator bool() const noexcept
+  {
+    return m_Ptr != nullptr;
+  }
+
+  T* Get() const noexcept
+  {
+    return m_Ptr;
+  }
+
   void Reset(T* ptr = nullptr) noexcept
   {
-    if (m_Ptr)
-    {
-      m_Deleter(m_Ptr);
-    }
-
+    T* old{ m_Ptr };
     m_Ptr = ptr;
+
+    if (old)
+    {
+      m_Deleter(old);
+    }
   }
 
   T* Release() noexcept
@@ -90,7 +96,12 @@ public:
     return ptr;
   }
 
-  Dx& GetDeleter()
+  Dx& GetDeleter() noexcept
+  {
+    return m_Deleter;
+  }
+
+  const Dx& GetDeleter() const noexcept
   {
     return m_Deleter;
   }

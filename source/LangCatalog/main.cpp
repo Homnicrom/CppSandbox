@@ -7,9 +7,9 @@
 
 struct language 
 {
-  std::string lang;
-  std::string designer;
-  int date;
+  std::string lang{};
+  std::string designer{};
+  int date{};
 };
 
 int main()

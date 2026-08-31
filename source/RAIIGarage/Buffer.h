@@ -1,62 +1,51 @@
 #pragma once
-#include<print>
+#include<optional>
 
 class Buffer
 {
 public:
-  Buffer() : m_Num{ new int{} }
+  enum class BufferOperation
   {
-    std::println("Buffer constructor! {0}", *m_Num);
-  }
+    DefaultConstruct,
+    ValueConstruct,
+    CopyConstruct,
+    MoveConstruct,
+    CopyAssign,
+    MoveAssign,
+    Destroy
+  };
 
-  explicit Buffer(const int num) : m_Num{new int{num}}
+  class IBufferObserver
   {
-    std::println("Buffer int argument constructor! {0}", *m_Num);
-  }
+  public:
+    virtual void OnBufferOperation(BufferOperation operation, std::optional<int> value) = 0;
 
-  Buffer(const Buffer& buffer) : m_Num{ buffer.m_Num ? new int{ *buffer.m_Num } : nullptr }
-  {
-    m_Num != nullptr ? std::println("Buffer COPY constructor! {0}", *m_Num) : std::println("Buffer COPY constructor! Nullptr");
-  }
+  protected:
+    ~IBufferObserver() = default;
+  };
 
-  Buffer(Buffer&& buffer) noexcept : m_Num{buffer.m_Num}
-  {
-    buffer.m_Num = nullptr;
-    m_Num != nullptr ? std::println("Buffer MOVE constructor! {0}", *m_Num) : std::println("Buffer MOVE constructor! Nullptr");
-  }
+  Buffer();
+  explicit Buffer(int num);
 
-  Buffer& operator=(const Buffer& buffer)
-  {
-    if (this != &buffer)
-    {
-      int* temp = buffer.m_Num ? new int(*buffer.m_Num) : nullptr; //For possible allocation failure, good pratice. Move assignment does not allocate
-      delete m_Num;
-      m_Num = temp;
-    }
-    m_Num != nullptr ? std::println("Buffer assignment! {0}", *m_Num) : std::println("Buffer assignment! Nullptr");
+  //Observer is not owning. The user must construct it before this Buffer and keeps it alive past it, as destructor notifies through it too
+  Buffer(int num, IBufferObserver* observer);
 
-    return *this;
-  }
+  Buffer(const Buffer& buffer);
+  Buffer(Buffer&& buffer) noexcept;
 
-  Buffer& operator=(Buffer&& buffer) noexcept
-  {
-    if (this != &buffer)
-    {
-      delete m_Num;
-      m_Num = buffer.m_Num;
-      buffer.m_Num = nullptr;
-    }
-    m_Num != nullptr ? std::println("Buffer MOVE assignment!{0}", *m_Num) : std::println("Buffer MOVE assignment! Nullptr");
+  Buffer& operator=(const Buffer& buffer);
+  Buffer& operator=(Buffer&& buffer) noexcept;
 
-    return *this;
-  }
+  ~Buffer();
 
-  ~Buffer()
-  {
-    m_Num != nullptr ? std::println("Buffer DELETE!{0}", *m_Num) : std::println("Buffer DELETE! Nullptr");
-    delete m_Num;
-  }
+  std::optional<int> GetValue() const;
 
 private:
   int* m_Num{};
+  IBufferObserver* m_Observer{};
+
+  //Default report
+  void ReportBufferOperation(BufferOperation operation) const;
+
+  void NotifyBufferOperation(BufferOperation operation) const;
 };

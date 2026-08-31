@@ -1,10 +1,33 @@
 #include<RAIIGarage/Registry.h>
+#include<cassert>
+
+Registry& Registry::GetInstance()
+{
+  //Safe thread initialization, automatically destroyed at program exit. Avoids initialization order problems
+  static Registry instance{};
+  return instance;
+}
+
+std::size_t Registry::EntryCount() const
+{
+  return m_Vehicles.size();
+}
+
+bool Registry::IsSameVehicle(const std::weak_ptr<IVehicle>& entry, const std::shared_ptr<IVehicle>& vehicle)
+{
+  return !entry.owner_before(vehicle) && !vehicle.owner_before(entry); //Comparison without locking
+}
 
 void Registry::RegisterVehicle(const std::shared_ptr<IVehicle>& vehicle)
 {
-  for (Entry& entry : m_Vehicles)
+  if (!vehicle)
   {
-    if (entry.vehicle.lock().get() == vehicle.get())
+    return;
+  }
+
+  for (VehicleEntry& entry : m_Vehicles)
+  {
+    if (IsSameVehicle(entry.vehicle, vehicle))
     {
       ++entry.refCount;
       return;
@@ -16,22 +39,24 @@ void Registry::RegisterVehicle(const std::shared_ptr<IVehicle>& vehicle)
 
 void Registry::RemoveVehicle(const std::shared_ptr<IVehicle>& vehicle)
 {
-  for (Entry& entry : m_Vehicles)
+  if (!vehicle)
   {
-    if (entry.vehicle.lock().get() == vehicle.get())
-    {
-      --entry.refCount;
-      break;
-    }
+    return;
   }
 
-  std::erase_if(m_Vehicles, [](const Entry& entry) {
+  bool vehicleFound{ false };
+  std::erase_if(m_Vehicles, [&](VehicleEntry& entry) {
+    if (!vehicleFound && IsSameVehicle(entry.vehicle, vehicle))
+    {
+      vehicleFound = true;
+      assert(entry.refCount > 0 && "Tried to remove count in entry where count is 0");
+      --entry.refCount;
+    }
     return entry.refCount <= 0 || entry.vehicle.expired();
     });
 }
 
-Registry& Registry::GetInstance()
+void Registry::Reset()
 {
-  static Registry instance{};
-  return instance;
+  m_Vehicles.clear();
 }

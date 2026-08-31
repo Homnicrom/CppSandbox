@@ -38,19 +38,28 @@ public:
       return vehicle;
     }
 
-    void operator()(IVehicle* vehicle) const 
+    void operator()(IVehicle* vehicle) const
     {
       if (vehicle)
       {
         vehicle->DeleteVehicle();
       }
     }
+
+  private:
+    Helper() = default;
   };
 
   virtual void Print() const = 0;
 
+  int GetSpeed() const { return m_Speed; }
+
 protected:
   int m_Speed{};
+
+  IVehicle() = default;
+  IVehicle(const IVehicle&) = delete;
+  IVehicle& operator=(const IVehicle&) = delete;
 
   virtual ~IVehicle();
 
@@ -64,6 +73,8 @@ class Car : public IVehicle
 {
 public:
   void Print() const override;
+
+  const std::string& GetName() const { return m_Name; }
 
 private:
   std::string m_Name{};
@@ -81,6 +92,8 @@ class Van : public IVehicle
 public:
   void Print() const override;
 
+  int GetCargoMax() const { return m_CargoMax; }
+
 private:
   int m_CargoMax{};
 
@@ -96,6 +109,9 @@ class Forklift : public IVehicle
 {
 public:
   void Print() const override;
+
+  int GetCargoMax() const { return m_CargoMax; }
+  float GetBalance() const { return m_Balance; }
 
 private:
   int m_CargoMax{};
@@ -113,6 +129,9 @@ class Truck : public IVehicle
 {
 public:
   void Print() const override;
+
+  int GetTrailerCount() const { return m_TrailerCount; }
+  float GetMaxLoad() const { return m_MaxLoad; }
 
 private:
   int m_TrailerCount{};
