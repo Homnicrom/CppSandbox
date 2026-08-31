@@ -26,5 +26,6 @@ Ground rules:
 - Prefer updating existing docs over creating new ones. Only create a new doc file if the user asks for one or if there's a clear gap (e.g. no README exists yet for a component).
 - No filler sections ("Contributing", "License", "Getting Started" boilerplate) unless asked or clearly relevant to the project.
 - For architecture docs, favor showing how components relate and why (the non-obvious design decisions, invariants, and constraints) over restating what's already obvious from file/class names.
+- Distinguish factual corrections (doc text no longer matches the code/behavior) from discretionary changes (removing a TODO/note, rewording for style, judgment calls about what's "stale"). Apply factual corrections directly; report discretionary changes as proposed edits in the summary instead of applying them. A TODO is the requester's own marker of pending intent, not something to adjudicate as stale on your own authority.
 
 Don't add code comments as a side effect of a documentation task, keep changes scoped to the doc files themselves unless asked otherwise.

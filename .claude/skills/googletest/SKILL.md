@@ -1,6 +1,6 @@
 ---
 name: googletest
-description: Write, structure, and run C++ unit tests with GoogleTest (and GoogleMock). Use whenever the user asks to add tests, test a C++ class or function, write fixtures, parameterized or typed tests, mocks, or debug failing/flaky GoogleTest cases, even if they only say "add tests" for C++ code.
+description: Write, structure, run, and prune C++ unit tests with GoogleTest (and GoogleMock). Use whenever the user asks to add tests, test a C++ class or function, write fixtures, parameterized or typed tests, mocks, or debug failing/flaky GoogleTest cases, even if they only say "add tests" for C++ code. Use it also to review, audit, or trim an existing test suite: judging whether cases are redundant, duplicated, unfalsifiable, or misnamed.
 ---
 
 # GoogleTest
@@ -126,6 +126,46 @@ TEST(UserServiceTest, RejectsSaveWhenAtCapacity) {
 - **Arrange-Act-Assert**: structure the body in that order.
 - **Deterministic**: no reliance on timing, addresses, or unseeded randomness, the main cause of most flaky tests.
 - **Fast**: unit tests avoid I/O, sleeps, and network.
+- **Every test must be able to fail**: see the next section.
+
+## Redundant, repeated, and unfalsifiable tests
+
+A test that cannot fail, or that fails only when another test already fails, costs maintenance and buys nothing. It also inflates the count in a way that hides what is genuinely untested.
+
+**Do this before reporting any test work as finished**: re-read every case you just wrote or touched, run each one through the three checks below, drop the ones that fail them, and say in your summary which you dropped and why. Writing the cases is not the last step; this pass is. The same three checks are what to apply when reviewing an existing suite.
+
+### 1. Can this test ever fail?
+
+Name the implementation change that would make the assertion fail. If you cannot name one, the test is decoration.
+
+- Asserting a postcondition the language already guarantees, such as non-null on a pointer from an allocation that throws rather than returning null.
+- An assertion whose failure case is undefined behavior. If the bad state crashes or corrupts before the assertion is reached, the test reports nothing. Assert on state you can legally read back instead.
+- Pinning a result that is identical under every plausible implementation, so no realistic edit can change it.
+- `EXPECT_NO_THROW` around code that contains no `throw`. If the real risk is UB, a crash, or silent corruption, no-throw catches none of them. Assert on the resulting state, or use a death test.
+- Restating an invariant every other test in the file already depends on, so it can never be the only failure.
+
+### 2. Is it already covered?
+
+- A runtime `TEST` restating a `static_assert`. The compile-time form is strictly stronger; delete the runtime copy.
+- Two tests differing only in data, not in the path through the code. Same branches, no new coverage. If the inputs genuinely differ in meaning, use `TEST_P` rather than copy-paste.
+- A loose assertion implied by a stricter one elsewhere, for example a "greater than zero" check where another test pins the exact value.
+- A case subsumed by a strictly larger one that runs the same path plus something extra.
+- Behavior owned by the language or the standard library rather than by your code. Test what your type adds on top, not what it inherits for free.
+
+### 3. Does it test what its name says?
+
+A name and body that drift apart are how a suite ends up with an untested path everyone believes is covered. If a test named after one function asserts only on a second one that happens to mirror its logic, either call the function in the name or rename the test. Likewise for a name describing a multi-object or multi-step scenario that the body never actually sets up.
+
+### Remove or rewrite?
+
+Default to removing. Rewrite only when the *subject* is worth covering and the body is what is wrong, and make the rewrite target the failure the original could not catch:
+
+- A no-throw check on an operation applied to an empty container becomes: populate it, apply the operation to an entry that is not there, assert the existing entries were left alone. Same subject, now catches the real bug.
+- A vacuous non-null check on a factory result becomes an assertion that the constructor arguments were forwarded, which proves the object is usable and covers the forwarding at once.
+
+If deleting a duplicate would lose an assertion with real diagnostic value (one that says *which* half broke), fold that assertion into the test that survives rather than keeping both.
+
+After trimming, leave a one-line comment saying why the remaining coverage is sufficient. Without it, the deleted cases get re-added by the next person who notices the apparent gap.
 
 ## Running / filtering
 

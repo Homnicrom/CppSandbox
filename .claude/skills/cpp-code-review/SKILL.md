@@ -29,6 +29,8 @@ Report findings by severity. Correctness and safety issues are blockers; style i
 5. **Performance** — Unnecessary copies, allocations in hot paths, missed moves, `reserve()` opportunities, passing large types by value. Only flag when it matters; do not micro-optimize cold code at the cost of clarity.
 6. **Style & readability** — Naming consistency, header hygiene (`#pragma once`, minimal includes, forward declarations), and clear structure. Lowest priority.
 
+When the code under review is a test file, also apply the redundancy, unfalsifiability, and name-drift checks in the `googletest` skill: a case that cannot fail or that duplicates another one is a finding, the same as dead production code.
+
 ## Step 3: Deliver the review
 
 Structure output as:

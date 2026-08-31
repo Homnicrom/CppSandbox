@@ -14,7 +14,7 @@ Claude Code came in afterward to help assemble this repo, keep it in order, lear
 - A **C++23** compiler for RAIIGarage and MemorySafetyDrills. `std::println` specifically needs a `<print>` implementation, which may lag behind general C++23 language support. MSVC in VS 2022 17.5+, GCC 14+ (libstdc++), or Clang 18+ (libc++) could be a reasonable baseline.
 - For MemorySafetyDrills' AddressSanitizer build on Windows: **Visual Studio 2019 16.9 or later** (`cl.exe`/`link.exe` native `/fsanitize=address` support), with the "C++ AddressSanitizer" optional component of the "Desktop development with C++" workload installed. No separate g++/Clang toolchain is needed, unless in Linux.
 
-The C++ version requirements are enforced automatically: RAIIGarage's and MemorySafetyDrills' `CMakeLists.txt` files declare `target_compile_features(... PRIVATE cxx_std_23)`, so `cmake -B build` will fail at **configure time** with a clear error if the selected compiler can't do C++23, rather than silently building with an older standard.
+The C++ version requirements are enforced automatically through `target_compile_features(... cxx_std_23)`: RAIIGarage declares it `PUBLIC` on its `RAIIGarageLib` target (so both the demo executable and the test executable inherit it), MemorySafetyDrills declares it `PRIVATE` on its own target. Either way `cmake -B build` will fail at **configure time** with a clear error if the selected compiler can't do C++23, rather than silently building with an older standard.
 
 ## Build
 
@@ -25,7 +25,35 @@ cmake --build build --config Debug
 For this, make sure Visual Studio 2022 and its Desktop development with C++ workload are installed, or if you are using a different VS version or build system generator, change the line in the powershell. https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html#manual:cmake-generators(7)
 Though, keep in mind the requierements listed above.
 
-Each project's executable lands under `build/bin/<ProjectName>/Debug/`.
+Each project's executable lands under `build/bin/<TargetName>/Debug/`.
+
+## Tests
+
+RAIIGarage has a GoogleTest suite under `source/RAIIGarage/tests/`: 40 cases across five suites (`UniquePtrTest`, `VehiclesHelperTest`, `RegistryTest`, `DealerTest`, `BufferTest`), plus `UtilitiesMaxTests.cpp`, which is `static_assert`-only on purpose since `Utilities::Max` is `constexpr` and a runtime `EXPECT` would be the weaker check.
+
+GoogleTest (v1.18.0) is pulled in by the root `CMakeLists.txt` via `FetchContent`, so there is nothing to install by hand: configuring the project downloads it.
+
+```powershell
+ctest --test-dir build -C Debug --output-on-failure
+```
+
+The test executable is a target of its own (`RAIIGarageTests`, built from the shared `RAIIGarageLib` object library so it compiles the project's sources under exactly the same settings the demo does), so you can also run it directly:
+
+```powershell
+build\bin\RAIIGarageTests\Debug\RAIIGarageTests.exe
+```
+
+Building `RAIIGarage` depends on the `RunRAIIGarageTests` custom target, so the demo executable won't build unless the suite has run and passed first.
+
+CI additionally runs the whole suite in a single shared process in random order (`--gtest_shuffle --gtest_repeat=5`). CTest runs every case in its own process, which makes cross-test contamination through the `Registry` singleton invisible to it; `Registry::Reset()` in `RegistryTest`'s `SetUp` is what prevents that contamination, and the shuffled single-process run is what actually proves it.
+
+## CI
+
+`.github/workflows/ci.yml`, on push and PR to `main`:
+
+- **build-windows**: configure, build every target in Debug|x64, `ctest`, then the shuffled single-process run described above.
+- **asan-windows**: builds MemorySafetyDrills with MSVC's native `/fsanitize=address` and **fails if the drill exits 0**. The drill is supposed to trip ASan, so a clean exit means the bug was accidentally fixed.
+- **asan-linux**: compiles `source/MemorySafetyDrills/main.cpp` directly with `g++-14 -std=c++23 -fsanitize=address -g` (no CMake), with the same nonzero-exit assertion.
 
 ## LangCatalog: text parsing / STL basics
 
