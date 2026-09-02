@@ -72,7 +72,7 @@ Legend as follows: IEntityListener (IVehicle), PingSystem (module A), GRL.Client
 ## MemorySafetyDrills: memory-safety drills (ASan)
 
 Single-file drills built with AddressSanitizer, each demonstrating one classic memory bug before/while you find it.
-The current drill (`main.cpp`) is **Drill 1: Dangling reference**: `FindName` returns a `const std::string&` into a `std::vector<Vehicle>`, and a later `push_back` on that vector reallocates its buffer, invalidating the earlier reference before it's read in `main`.
+The current drill (`main.cpp`) is **Dangling reference**: `FindName` returns a `const std::string&` into a `std::vector<Vehicle>`, and a later `push_back` on that vector reallocates its buffer, invalidating the earlier reference before it's read in `main`.
 
 **Windows**: no separate toolchain needed, just the standard build from above (requires VS 2019 16.9+, see Requirements). `MemorySafetyDrills/CMakeLists.txt` turns on `/fsanitize=address` for MSVC by default:
 
