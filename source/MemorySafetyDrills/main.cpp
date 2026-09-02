@@ -1,4 +1,4 @@
-// Drill 1: Dangling reference
+// Dangling reference
 //
 // Windows: the normal build already gives you ASan, no extra toolchain needed.
 // cl.exe has had native /fsanitize=address support since VS 2019 16.9.
