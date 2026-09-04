@@ -67,7 +67,7 @@ IVehicle::Helper hides derived class construction and destruction, acting as a f
 Going back to modules A and B, now a class in module B can construct a derived class from IVehicle that uses module B's network functionality and pass it for module A to use through the interface without dependency issues.
 
 This case is directly linked with my professional technical design documents that can be found here: https://www.flipsnack.com/homni/diego-v-zquez-garrido-portfolio-t95olqqm8y.
-Legend as follows: IEntityListener (IVehicle), PingSystem (module A), GRL.Client (module B).
+Legend as follows: IEntityListener (IVehicle), PingSystem (module A), ReplicationClient (module B).
 
 ## MemorySafetyDrills: memory-safety drills (ASan)
 
