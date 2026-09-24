@@ -1,16 +1,12 @@
 // Dangling reference
 //
-// Windows: the normal build already gives you ASan, no extra toolchain needed.
-// cl.exe has had native /fsanitize=address support since VS 2019 16.9.
-//   cmake -B build -G "Visual Studio 17 2022" -A x64
-//   cmake --build build --config Debug --target MemorySafetyDrills
-//   build\bin\MemorySafetyDrills\Debug\MemorySafetyDrills.exe
-// (MemorySafetyDrills/CMakeLists.txt adds /fsanitize=address for MSVC and copies the
-// matching clang_rt.asan*dynamic-x86_64.dll next to the .exe automatically.)
+// ASan is on by default for this target on both platforms (MSVC needs VS 2019 16.9+):
+//   cmake --preset <windows|linux>
+//   cmake --build --preset <windows|linux>-debug --target MemorySafetyDrills
+//   build/bin/MemorySafetyDrills/Debug/MemorySafetyDrills   (backslashes on Windows)
 //
-// Linux/macOS: g++ -std=c++23 -fsanitize=address -g main.cpp -o d1 && ./d1
-//
-// Run under ASan.
+// Without CMake, from this folder (g++-14, not plain g++: 13 has no <print>):
+//   g++-14 -std=c++23 -fsanitize=address -g main.cpp -o d1 && ./d1
 
 #include <print>
 #include <vector>

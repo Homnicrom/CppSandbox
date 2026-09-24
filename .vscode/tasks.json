@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      // Default build task (Ctrl+Shift+B). Preset and target both follow the CMake Tools selection,
+      // so switching to a Release preset can't silently keep building Debug.
+      "label": "CMake: build selected target",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "--preset",
+        "${command:cmake.activeBuildPresetName}",
+        "--target",
+        "${command:cmake.launchTargetName}"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$gcc"],
+      "group": { "kind": "build", "isDefault": true },
+      // The preset already carries the platform; only the diagnostic format differs.
+      "windows": {
+        "problemMatcher": ["$msCompile"]
+      }
+    }
+  ]
+}

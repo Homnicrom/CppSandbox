@@ -2,30 +2,41 @@
 
 Inside this project you will find three C++ console projects not connected to each other. Each is a separate exercise that explores specific elements of modern C++ (STL basics, manual RAII/smart-pointer implementation, memory-safety tooling).
 
-Windows with MSVC is the primary toolchain, including for MemorySafetyDrills, given that MSVC has shipped native AddressSanitizer support (`/fsanitize=address`) since VS 2019 16.9, so no separate g++/Clang toolchain is needed there. g++ under Linux/macOS works too and is what CI uses.
+Two toolchains are supported: Windows with MSVC and Linux with `g++-14`. Each has a CMake preset and a CI job that builds every target and runs the tests. Neither needs an extra toolchain for MemorySafetyDrills' AddressSanitizer build.
 
 The code present in this project has been hand-written before Claude Code was incorporated into it, and in some cases echoes patterns and problems I've experienced professionally during my time at Ubisoft.
 Claude Code came in afterward to help assemble this repo, keep it in order, learn new technologies I'm not familiar with (Asan, CMake, CI), and serve as a hands-on way to learn the tool itself: how to fit it into the workflow, and how to get the most out of it.
 
-### Requirements
+## Requirements
 
-- **CMake >= 3.20** (as specified by `cmake_minimum_required` in the root `CMakeLists.txt`)
+- **CMake >= 3.21** (as specified by `cmake_minimum_required` in the root `CMakeLists.txt`, and required by `CMakePresets.json`)
 - A **C++17** compiler for LangCatalog
 - A **C++23** compiler for RAIIGarage and MemorySafetyDrills. `std::println` specifically needs a `<print>` implementation, which may lag behind general C++23 language support. MSVC in VS 2022 17.5+, GCC 14+ (libstdc++), or Clang 18+ (libc++) could be a reasonable baseline.
-- For MemorySafetyDrills' AddressSanitizer build on Windows: **Visual Studio 2019 16.9 or later** (`cl.exe`/`link.exe` native `/fsanitize=address` support), with the "C++ AddressSanitizer" optional component of the "Desktop development with C++" workload installed. No separate g++/Clang toolchain is needed, except on Linux.
+- For MemorySafetyDrills' AddressSanitizer build on Windows: **Visual Studio 2022** (as pinned by the `windows` preset; ASan itself needs only 16.9+), with the "C++ AddressSanitizer" component of the "Desktop development with C++" workload. No MinGW or Clang install is needed — `cl.exe` handles `/fsanitize=address` natively.
+- On Linux: **`g++-14`** (for C++23) and **Ninja**, as expected by the `linux` preset below.
 
-The C++ version requirements are enforced automatically through `target_compile_features(... cxx_std_23)`: RAIIGarage declares it `PUBLIC` on its `RAIIGarageLib` target (so both the demo executable and the test executable inherit it), MemorySafetyDrills declares it `PRIVATE` on its own target. Either way `cmake -B build` will fail at **configure time** with a clear error if the selected compiler can't do C++23, rather than silently building with an older standard.
+The C++ version requirements are enforced automatically through `target_compile_features(... cxx_std_23)`: RAIIGarage declares it `PUBLIC` on its `RAIIGarageLib` target (so both the demo executable and the test executable inherit it), MemorySafetyDrills declares it `PRIVATE` on its own target. Either way it fails at **configure time** with a clear error if the selected compiler can't do C++23, rather than silently building with an older standard.
+
+GCC 13 slips past that check: it accepts `-std=c++23` but ships no `<print>`, so the build would only fail later on a missing include. The root `CMakeLists.txt` rejects GCC older than 14 explicitly for that reason.
 
 ## Build
 
-```powershell
-cmake -B build -G "Visual Studio 17 2022" -A x64
-cmake --build build --config Debug
-```
-For this, make sure Visual Studio 2022 and its Desktop development with C++ workload are installed, or if you are using a different VS version or build system generator, change the generator line in the command above. https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html#manual:cmake-generators(7)
-Keep in mind the requirements listed above.
+`CMakePresets.json` carries one preset per platform, so the same three commands work on both:
 
-Each project's executable lands under `build/bin/<TargetName>/Debug/`.
+```bash
+cmake --preset <windows|linux>          # configure
+cmake --build --preset <...>-debug      # build every target
+ctest --preset <...>-debug              # run the tests
+```
+
+- **`windows`** → Visual Studio 17 2022, x64. VS reads the presets directly (*File → Open → Folder*); `CreateVisualStudioSolution.bat` is a double-click wrapper around `cmake --preset windows` that leaves you `build\CppSandbox.sln`.
+- **`linux`** → Ninja Multi-Config with `g++-14`. Multi-Config is deliberate: it keeps the configs and the output layout identical to the Visual Studio generator, so there is one set of instructions rather than one per platform.
+
+Each project's executable lands under `build/bin/<TargetName>/<Config>/`, which is `Debug/` for the presets above.
+
+### VS Code
+
+`.vscode/` is set up for the CMake Tools extension (recommended on first open), which drives the presets above, so build, debug and the Test Explorer match the command line.
 
 ## LangCatalog: text parsing / STL basics
 
@@ -45,11 +56,12 @@ Python,van Rossum,1991
 
 The main sandbox.
 
-- A hand-rolled `unique_ptr` (`UniquePtr<T, Deleter>`, with converting move-construction from derived to base). It sparked from working with an in-house `unique_ptr` in Ubisoft's engine; this one is just a simple implementation partly mirroring `unique_ptr`.
+- A hand-rolled `unique_ptr` (`UniquePtr<T, Deleter>`, with converting move-construction from derived to base). It sparked from working with an in-house `unique_ptr` in Ubisoft's engine; though this one is just a simple implementation partly mirroring `std::unique_ptr`.
 - A Meyers-singleton `Registry` that observes vehicle lifetime via `weak_ptr` without owning it. Singleton is a very common pattern in games, and pairing `weak_ptr` with `shared_ptr` showcases resource ownership, which in my opinion is one of the leading efforts when designing a new system.
 - A `Dealer` RAII wrapper tying registration to scope, again showing differences between strong and weak references in ownership.
 - A rule-of-five `Buffer` class instrumented to show exactly when each special member runs (including copy-elision cases).
 - A `constexpr` variadic `Utilities::Max` constrained by concepts, for a modern template constraints showcase. `Numeric` keeps out `bool` and the character types, and `ConsistentSignedness` rejects args packs that mix signed with unsigned.
+- A `ScopedTimer` that prints its lifetime on destruction. It sits at the top of `main()` and is also a member of every `IVehicle`, so vehicle destruction is visible in the output too.
 
 ### The IVehicle factory
 
@@ -74,17 +86,18 @@ Legend as follows: IEntityListener (IVehicle), PingSystem (module A), Replicatio
 Single-file drills built with AddressSanitizer, each demonstrating one classic memory bug before/while you find it.
 The current drill (`main.cpp`) is **Dangling reference**: `FindName` returns a `const std::string&` into a `std::vector<Vehicle>`, and a later `push_back` on that vector reallocates its buffer, invalidating the earlier reference before it's read in `main`.
 
-**Windows**: no separate toolchain needed, just the standard build from above (requires VS 2019 16.9+, see Requirements). `MemorySafetyDrills/CMakeLists.txt` turns on `/fsanitize=address` for MSVC by default:
-
-```powershell
-cmake --build build --config Debug --target MemorySafetyDrills
-build\bin\MemorySafetyDrills\Debug\MemorySafetyDrills.exe
-```
-
-**Linux/macOS**: use the line from the file's own header comment:
+**Either platform**: no separate toolchain, just the standard build from above (Windows ASAN requires VS 2019 16.9+, see Requirements). `MemorySafetyDrills/CMakeLists.txt` turns on `/fsanitize=address` for MSVC and `-fsanitize=address` for GCC/Clang by default:
 
 ```bash
-g++ -std=c++23 -fsanitize=address -g main.cpp -o d1
+cmake --build --preset <windows|linux>-debug --target MemorySafetyDrills
+build/bin/MemorySafetyDrills/Debug/MemorySafetyDrills
+```
+
+**Without CMake** (Linux): the line from the file's own header comment, run from the drill's folder. Use `g++-14` rather than plain `g++`: the distro default is still 13 on the baseline above, and it has no `<print>`.
+
+```bash
+cd source/MemorySafetyDrills
+g++-14 -std=c++23 -fsanitize=address -g main.cpp -o d1
 ./d1
 ```
 
@@ -96,14 +109,15 @@ RAIIGarage has a GoogleTest suite under `source/RAIIGarage/tests/`: 40 cases acr
 
 GoogleTest (v1.18.0) is pulled in by the root `CMakeLists.txt` via `FetchContent`, so there is nothing to install by hand: configuring the project downloads it.
 
-```powershell
-ctest --test-dir build -C Debug --output-on-failure
+```bash
+ctest --preset <windows|linux>-debug
 ```
 
 The test executable is a target of its own (`RAIIGarageTests`, built from the shared `RAIIGarageLib` object library so it compiles the project's sources under exactly the same settings the demo does), so you can also run it directly:
 
-```powershell
-build\bin\RAIIGarageTests\Debug\RAIIGarageTests.exe
+```
+build\bin\RAIIGarageTests\Debug\RAIIGarageTests.exe   :: Windows
+build/bin/RAIIGarageTests/Debug/RAIIGarageTests       # Linux
 ```
 
 Building `RAIIGarage` depends on the `RunRAIIGarageTests` custom target, so the demo executable won't build unless the suite has run and passed first.
@@ -114,7 +128,7 @@ CI additionally runs the whole suite in a single shared process in random order 
 
 `.github/workflows/ci.yml`, on push and PR to `main`:
 
-- **build-windows**: configure, build every target in Debug|x64, `ctest`, then the shuffled single-process run described above.
+- **build-windows** / **build-linux**: configure, build every target in Debug, `ctest`, then the shuffled single-process run described above. Both drive the presets, so CI and a local checkout cannot drift apart.
 - **asan-windows**: builds MemorySafetyDrills with MSVC's native `/fsanitize=address` and **fails if the drill exits 0**. The drill is supposed to trip ASan, so a clean exit means the bug was accidentally fixed.
 - **asan-linux**: compiles `source/MemorySafetyDrills/main.cpp` directly with `g++-14 -std=c++23 -fsanitize=address -g` (no CMake), with the same nonzero-exit assertion.
 

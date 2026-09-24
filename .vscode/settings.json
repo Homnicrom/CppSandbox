@@ -1,0 +1,11 @@
+{
+  // Configure/build/test come from CMakePresets.json, so the extension can't invent settings
+  // that drift from the command line and CI.
+  "cmake.useCMakePresets": "always",
+
+  // Picking the debug target also picks it as the build target, so F5 builds only what it debugs.
+  "cmake.setBuildTargetSameAsLaunchTarget": true,
+
+  // IntelliSense takes the real flags (include dirs, -std=c++23) from CMake
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+}

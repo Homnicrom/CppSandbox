@@ -2,6 +2,12 @@
 build/
 out/
 
+# Per-developer preset overrides; CMakePresets.json is the shared one and is committed
+CMakeUserPresets.json
+
+# clangd index cache
+.cache/
+
 # Visual Studio
 .vs/
 *.user
@@ -11,17 +17,15 @@ out/
 *.VC.db
 *.VC.opendb
 
-# MSBuild output (if native .sln/.vcxproj are ever restored)
+# MSBuild output (if native .sln/.vcxproj ever return)
 [Dd]ebug/
 [Rr]elease/
 x64/
 x86/
 Win32/
 
-# ASan drill build artifacts (g++ -o d1, etc.)
+# ASan drill binaries (g++ -o d1 next to the drill, -o drill1 at the root as in CI)
 MemorySafetyDrills/d[0-9]
 MemorySafetyDrills/d[0-9].exe
-
-# ASan drill build artifacts from the CI command run locally (g++ ... -o drill1)
 /drill[0-9]
 /drill[0-9].exe

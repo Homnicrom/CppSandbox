@@ -13,20 +13,43 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Configure (CMake)
-        run: cmake -B build -A x64
+        run: cmake --preset windows
 
       - name: Build all targets (Debug|x64)
-        run: cmake --build build --config Debug
+        run: cmake --build --preset windows-debug
 
       - name: Run tests (CTest)
-        run: ctest --test-dir build -C Debug --output-on-failure
+        run: ctest --preset windows-debug
 
-      # CTest runs every case in its own process, so cross-test contamination through the
-      # Registry singleton is invisible to the step above no matter how it is ordered.
-      # Registry::Reset() in RegistryTest's SetUp is what prevents that contamination; this step
-      # is what proves it, by running the whole suite in one shared process in a random order.
+      # CTest gives every case its own process, hiding cross-test contamination through the
+      # Registry singleton. One shared process, random order, is what proves Registry::Reset()
+      # in RegistryTest's SetUp does its job.
       - name: Run tests in a single process, shuffled
         run: build\bin\RAIIGarageTests\Debug\RAIIGarageTests.exe --gtest_shuffle --gtest_repeat=5
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # <print> needs libstdc++ from GCC 14; ubuntu-latest still defaults to g++-13.
+      - name: Install g++-14 and Ninja
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-14 ninja-build
+
+      - name: Configure (CMake)
+        run: cmake --preset linux
+
+      - name: Build all targets (Debug)
+        run: cmake --build --preset linux-debug
+
+      - name: Run tests (CTest)
+        run: ctest --preset linux-debug
+
+      # Same reasoning as the Windows job.
+      - name: Run tests in a single process, shuffled
+        run: ./build/bin/RAIIGarageTests/Debug/RAIIGarageTests --gtest_shuffle --gtest_repeat=5
 
   asan-windows:
     runs-on: windows-latest
@@ -34,10 +57,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Configure (CMake)
-        run: cmake -B build -A x64
+        run: cmake --preset windows
 
       - name: Build MemorySafetyDrills with AddressSanitizer (MSVC native, VS 2019 16.9+)
-        run: cmake --build build --config Debug --target MemorySafetyDrills
+        run: cmake --build --preset windows-debug --target MemorySafetyDrills
 
       - name: Run drill and confirm ASan catches the dangling reference
         shell: pwsh
